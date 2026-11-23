@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>服飾商品資料庫管理與查詢系統 | Clothing Store Dashboard</title>
+  <style>
+    :root {
+      --bg: #f4f6f9;
+      --card: #ffffff;
+      --primary: #1e293b;
+      --accent: #2563eb;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+      color: #fff;
+      padding: 2rem 1.5rem 2.75rem;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+    }
+    .container { max-width: 1280px; margin: 0 auto; padding: 0 1.25rem; }
+    header h1 { font-size: 1.75rem; font-weight: 700; letter-spacing: 0.5px; }
+    header p { color: #cbd5e1; margin-top: 0.35rem; font-size: 0.95rem; }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 1rem;
+      margin: -1.75rem auto 1.5rem;
+    }
+    .kpi-card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 1.15rem 1.35rem;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+    }
+    .kpi-label { font-size: 0.82rem; color: var(--muted); font-weight: 600; }
+    .kpi-value { font-size: 1.65rem; font-weight: 700; color: var(--primary); margin-top: 0.25rem; }
+
+    .filter-bar {
+      background: var(--card);
+      padding: 1.15rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr auto;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      align-items: center;
+    }
+    @media (max-width: 900px) { .filter-bar { grid-template-columns: 1fr 1fr; } }
+    input, select, button {
+      padding: 0.62rem 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.92rem;
+      background: #fff;
+      color: var(--text);
+    }
+    input:focus, select:focus { outline: 2px solid var(--accent); border-color: transparent; }
+    button.reset-btn {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: opacity 0.2s;
+    }
+    button.reset-btn:hover { opacity: 0.9; }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(255px, 1fr));
+      gap: 1.35rem;
+      padding-bottom: 3rem;
+    }
+    .card {
+      background: var(--card);
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      display: flex;
+      flex-direction: column;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(15, 23, 42, 0.1);
+    }
+    .img-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      background: #f8fafc;
+      overflow: hidden;
+    }
+    .img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+    .card:hover .img-wrap img { transform: scale(1.05); }
+    .badge-cat {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(15, 23, 42, 0.82);
+      color: #fff;
+      font-size: 0.75rem;
+      padding: 0.22rem 0.6rem;
+      border-radius: 999px;
+      backdrop-filter: blur(4px);
+    }
+    .badge-id {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(255, 255, 255, 0.92);
+      color: var(--primary);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+    .card-body { padding: 1rem 1.1rem; flex: 1; display: flex; flex-direction: column; }
+    .brand-tag { font-size: 0.78rem; color: var(--accent); font-weight: 700; text-transform: uppercase; }
+    .product-title { font-size: 1.08rem; font-weight: 700; margin: 0.2rem 0 0.5rem; }
+    .meta-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 0.85rem;
+    }
+    .meta-pill {
+      background: #f1f5f9;
+      padding: 0.15rem 0.5rem;
+      border-radius: 5px;
+    }
+    .card-footer {
+      margin-top: auto;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .price { font-size: 1.22rem; font-weight: 800; color: #dc2626; }
+    .stock-info { font-size: 0.8rem; font-weight: 600; text-align: right; }
+    .stock-ok { color: var(--success); }
+    .stock-low { color: var(--warning); }
+    .stock-out { color: var(--danger); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>👗 服飾資料庫連結應用 Dashboard</h1>
+      <p>Filess.io Cloud MySQL × Python Colab API × GitHub Pages 商品圖片與庫存管理系統</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">符合篩選商品款數</div>
+        <div class="kpi-value" id="kpiCount">0 款</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">篩選商品平均定價</div>
+        <div class="kpi-value" id="kpiAvgPrice">$0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">總庫存件數</div>
+        <div class="kpi-value" id="kpiStock">0 件</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">已完成訂單累計銷量</div>
+        <div class="kpi-value" id="kpiSold">0 件</div>
+      </div>
+    </section>
+
+    <section class="filter-bar">
+      <input type="text" id="searchInput" placeholder="🔍 搜尋商品名稱、編號（如 P0001、外套、洋裝）..." />
+      <select id="categoryFilter"><option value="">全部分類</option></select>
+      <select id="brandFilter"><option value="">全部品牌</option></select>
+      <select id="sortSelect">
+        <option value="id-asc">排序：商品編號 (P0001→P0060)</option>
+        <option value="price-desc">排序：價格由高到低</option>
+        <option value="price-asc">排序：價格由低到高</option>
+        <option value="sold-desc">排序：累計銷量由高到低</option>
+        <option value="stock-asc">排序：庫存由少到多</option>
+      </select>
+      <button class="reset-btn" id="resetBtn">重設條件</button>
+    </section>
+
+    <section class="product-grid" id="productGrid"></section>
+  </main>
+
+  <script>
+    const API_URL = "./api/products.json";
+    let allProducts = [];
+
+    async function init() {
+      const res = await fetch(API_URL + "?t=" + Date.now());
+      allProducts = await res.json();
+      populateFilters(allProducts);
+      render();
+    }
+
+    function populateFilters(items) {
+      const cats = [...new Set(items.map(i => i.category_name))];
+      const brands = [...new Set(items.map(i => i.brand_name))];
+      const catSel = document.getElementById("categoryFilter");
+      const brandSel = document.getElementById("brandFilter");
+      cats.forEach(c => catSel.innerHTML += `<option value="${c}">${c}</option>`);
+      brands.forEach(b => brandSel.innerHTML += `<option value="${b}">${b}</option>`);
+    }
+
+    function render() {
+      const kw = document.getElementById("searchInput").value.trim().toLowerCase();
+      const cat = document.getElementById("categoryFilter").value;
+      const brand = document.getElementById("brandFilter").value;
+      const sort = document.getElementById("sortSelect").value;
+
+      let filtered = allProducts.filter(p => {
+        const matchKw = !kw || p.product_name.toLowerCase().includes(kw) || p.product_id.toLowerCase().includes(kw);
+        const matchCat = !cat || p.category_name === cat;
+        const matchBrand = !brand || p.brand_name === brand;
+        return matchKw && matchCat && matchBrand;
+      });
+
+      filtered.sort((a, b) => {
+        if (sort === "price-desc") return b.price - a.price;
+        if (sort === "price-asc") return a.price - b.price;
+        if (sort === "sold-desc") return b.sold_qty - a.sold_qty;
+        if (sort === "stock-asc") return a.stock_qty - b.stock_qty;
+        return a.product_id.localeCompare(b.product_id);
+      });
+
+      document.getElementById("kpiCount").textContent = `${filtered.length} 款`;
+      const avg = filtered.length ? Math.round(filtered.reduce((s, p) => s + p.price, 0) / filtered.length) : 0;
+      document.getElementById("kpiAvgPrice").textContent = `NT$ ${avg.toLocaleString()}`;
+      document.getElementById("kpiStock").textContent = `${filtered.reduce((s, p) => s + p.stock_qty, 0)} 件`;
+      document.getElementById("kpiSold").textContent = `${filtered.reduce((s, p) => s + p.sold_qty, 0)} 件`;
+
+      const grid = document.getElementById("productGrid");
+      grid.innerHTML = filtered.map(p => {
+        const stockClass = p.stock_qty === 0 ? "stock-out" : (p.stock_qty <= 5 ? "stock-low" : "stock-ok");
+        const stockText = p.stock_qty === 0 ? "已售罄 (0)" : `庫存 ${p.stock_qty} 件`;
+        return `
+          <article class="card">
+            <div class="img-wrap">
+              <img src="${p.image_url}" alt="${p.product_name}" loading="lazy" />
+              <span class="badge-cat">${p.category_name}</span>
+              <span class="badge-id">${p.product_id}</span>
+            </div>
+            <div class="card-body">
+              <div class="brand-tag">${p.brand_name} · ${p.brand_country}</div>
+              <h2 class="product-title">${p.product_name}</h2>
+              <div class="meta-row">
+                <span class="meta-pill">顏色：${p.color}</span>
+                <span class="meta-pill">尺寸：${p.size}</span>
+                <span class="meta-pill">已售：${p.sold_qty} 件</span>
+              </div>
+              <div class="card-footer">
+                <div class="price">NT$ ${Number(p.price).toLocaleString()}</div>
+                <div class="stock-info ${stockClass}">${stockText}</div>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    ["searchInput", "categoryFilter", "brandFilter", "sortSelect"].forEach(id => {
+      document.getElementById(id).addEventListener("input", render);
+    });
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      document.getElementById("searchInput").value = "";
+      document.getElementById("categoryFilter").value = "";
+      document.getElementById("brandFilter").value = "";
+      document.getElementById("sortSelect").value = "id-asc";
+      render();
+    });
+
+    init();
+  </script>
+</body>
+</html>
